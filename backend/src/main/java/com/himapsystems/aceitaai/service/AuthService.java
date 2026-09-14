@@ -33,6 +33,12 @@ public class AuthService {
                 .documento(request.documento())
                 .whatsapp(request.whatsapp())
                 .cep(request.cep())
+                .logradouro(request.logradouro())
+                .numero(request.numero())
+                .complemento(request.complemento())
+                .bairro(request.bairro())
+                .cidade(request.cidade())
+                .estado(request.estado())
                 .email(request.email())
                 .senhaHash(passwordEncoder.encode(request.senha()))
                 .build();

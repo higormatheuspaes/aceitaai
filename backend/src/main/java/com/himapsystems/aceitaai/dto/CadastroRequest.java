@@ -9,6 +9,12 @@ public record CadastroRequest(
         @NotBlank String documento,
         @NotBlank String whatsapp,
         String cep,
+        String logradouro,
+        String numero,
+        String complemento,
+        String bairro,
+        String cidade,
+        String estado,
         @NotBlank @Email String email,
         @NotBlank String senha
 ) {}
