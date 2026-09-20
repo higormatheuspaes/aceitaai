@@ -78,13 +78,13 @@ export default async function ClientesPage({
                 : 'Você ainda não cadastrou nenhum cliente. Clica em "Novo cliente" pra começar.'}
             </div>
           ) : (
-            <table className="table-fixed">
+            <table className="tabela-linhas">
               <thead>
                 <tr>
                   <th>Cliente</th>
                   <th>WhatsApp</th>
-                  <th className="col-hide-sm">CPF</th>
-                  <th className="col-hide-sm">E-mail</th>
+                  <th>CPF</th>
+                  <th>E-mail</th>
                 </tr>
               </thead>
               <tbody>
@@ -97,8 +97,8 @@ export default async function ClientesPage({
                       </div>
                     </td>
                     <td>{cliente.whatsapp}</td>
-                    <td className="col-hide-sm">{mascararCpf(cliente.cpf)}</td>
-                    <td className="col-hide-sm">{cliente.email || "—"}</td>
+                    <td>{mascararCpf(cliente.cpf)}</td>
+                    <td>{cliente.email || "—"}</td>
                   </tr>
                 ))}
               </tbody>

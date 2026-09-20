@@ -887,7 +887,8 @@ tbody tr:hover {
 .content-fit .table-wrap {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .content-fit .filter-bar {
@@ -898,7 +899,7 @@ tbody tr:hover {
   flex-shrink: 0;
 }
 
-.table-fixed td {
+.tabela-linhas td {
   height: 52px;
   padding-top: 0;
   padding-bottom: 0;
@@ -1057,6 +1058,7 @@ tbody tr:hover {
 
   .builder-grid {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .builder-preview {
@@ -1211,23 +1213,10 @@ tbody tr:hover {
     padding-right: 16px;
   }
 
-  .table-fixed th,
-  .table-fixed td {
+  .tabela-linhas th,
+  .tabela-linhas td {
     padding-left: 12px;
     padding-right: 12px;
   }
 
-  .table-fixed td {
-    white-space: normal;
-  }
-
-  .table-fixed td:nth-child(2) {
-    white-space: nowrap;
-  }
-}
-
-@media (max-width: 700px) {
-  .col-hide-sm {
-    display: none;
-  }
 }
