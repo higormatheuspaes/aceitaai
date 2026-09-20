@@ -24,14 +24,14 @@ export async function encerrarSessao() {
   cookieStore.delete(COOKIE_NAME);
 }
 
-export async function obterSessao(): Promise<{ autonomoId: number; email: string } | null> {
+export async function obterSessao(): Promise<{ autonomoId: number; email: string; nomeNegocio: string } | null> {
   const token = await obterToken();
   if (!token) return null;
 
   try {
     const payloadBase64 = token.split(".")[1];
     const payload = JSON.parse(Buffer.from(payloadBase64, "base64url").toString("utf-8"));
-    return { autonomoId: payload.autonomoId, email: payload.sub };
+    return { autonomoId: payload.autonomoId, email: payload.sub, nomeNegocio: payload.nomeNegocio };
   } catch {
     return null;
   }
