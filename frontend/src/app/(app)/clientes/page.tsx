@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { apiGetAuth } from "@/lib/api";
 import type { PageResponse } from "@/lib/types";
-import { COOKIE_TAMANHO, urlClientes } from "@/lib/clientes-url";
+import { cookieTamanho, urlLista } from "@/lib/lista-url";
 import { AutoTamanhoPagina } from "@/components/auto-tamanho-pagina";
 
 type Cliente = {
@@ -45,7 +45,7 @@ export default async function ClientesPage({
   const pagina = Math.max(0, Math.min(100000, paginaUrl - 1));
   const tamanho = Math.max(
     5,
-    Math.min(100, Math.floor(Number(cookieStore.get(COOKIE_TAMANHO)?.value)) || TAMANHO_INICIAL)
+    Math.min(100, Math.floor(Number(cookieStore.get(cookieTamanho("clientes"))?.value)) || TAMANHO_INICIAL)
   );
   const busca = params.busca ?? "";
 
@@ -114,12 +114,12 @@ export default async function ClientesPage({
           </span>
           <div className="pagination-links">
             {pagina > 0 ? (
-              <Link href={urlClientes(pagina - 1, busca)}>← Anterior</Link>
+              <Link href={urlLista("clientes", pagina - 1, busca)}>← Anterior</Link>
             ) : (
               <span className="disabled">← Anterior</span>
             )}
             {pagina + 1 < resultado.totalPaginas ? (
-              <Link href={urlClientes(pagina + 1, busca)}>Próxima →</Link>
+              <Link href={urlLista("clientes", pagina + 1, busca)}>Próxima →</Link>
             ) : (
               <span className="disabled">Próxima →</span>
             )}
@@ -127,7 +127,7 @@ export default async function ClientesPage({
         </div>
       </div>
 
-      <AutoTamanhoPagina tamanhoAtual={tamanho} pagina={pagina} busca={busca} />
+      <AutoTamanhoPagina rota="clientes" tamanhoAtual={tamanho} pagina={pagina} busca={busca} />
     </>
   );
 }

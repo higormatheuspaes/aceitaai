@@ -2,19 +2,21 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { COOKIE_TAMANHO, urlClientes } from "@/lib/clientes-url";
+import { cookieTamanho, urlLista } from "@/lib/lista-url";
 
 const ALTURA_LINHA_PADRAO = 52;
 const ALTURA_CABECALHO_PADRAO = 40;
 
 export function AutoTamanhoPagina({
+  rota,
   tamanhoAtual,
   pagina,
-  busca,
+  busca = "",
 }: {
+  rota: string;
   tamanhoAtual: number;
   pagina: number;
-  busca: string;
+  busca?: string;
 }) {
   const router = useRouter();
 
@@ -34,10 +36,10 @@ export function AutoTamanhoPagina({
       const novoTamanho = Math.max(5, Math.min(100, Math.floor(disponivel / alturaLinha)));
       if (novoTamanho === tamanhoAtual) return;
 
-      document.cookie = `${COOKIE_TAMANHO}=${novoTamanho}; path=/; max-age=31536000; samesite=lax`;
+      document.cookie = `${cookieTamanho(rota)}=${novoTamanho}; path=/; max-age=31536000; samesite=lax`;
 
       const novaPagina = Math.floor((pagina * tamanhoAtual) / novoTamanho);
-      const destino = urlClientes(novaPagina, busca);
+      const destino = urlLista(rota, novaPagina, busca);
       const atual = window.location.pathname + window.location.search;
 
       if (destino === atual) {
@@ -58,7 +60,7 @@ export function AutoTamanhoPagina({
       clearTimeout(timer);
       window.removeEventListener("resize", aoRedimensionar);
     };
-  }, [tamanhoAtual, pagina, busca, router]);
+  }, [rota, tamanhoAtual, pagina, busca, router]);
 
   return null;
 }

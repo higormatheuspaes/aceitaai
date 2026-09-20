@@ -8,6 +8,26 @@ export type AuthResponse = {
   nomeNegocio: string;
 };
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(mensagem: string, status: number) {
+    super(mensagem);
+    this.status = status;
+  }
+}
+
+function montarMensagem(data: { erro?: string; message?: string; campos?: Record<string, string> } | null) {
+  const base = data?.erro ?? data?.message ?? "Erro ao comunicar com o servidor.";
+  if (data?.campos && Object.keys(data.campos).length > 0) {
+    const detalhes = Object.entries(data.campos)
+      .map(([campo, motivo]) => `${campo}: ${motivo}`)
+      .join("; ");
+    return `${base} (${detalhes})`;
+  }
+  return base;
+}
+
 async function request<T>(path: string, options: RequestInit = {}, autenticado = false): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -25,8 +45,7 @@ async function request<T>(path: string, options: RequestInit = {}, autenticado =
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const mensagem = data?.erro ?? data?.message ?? "Erro ao comunicar com o servidor.";
-    throw new Error(mensagem);
+    throw new ApiError(montarMensagem(data), response.status);
   }
 
   return data as T;
