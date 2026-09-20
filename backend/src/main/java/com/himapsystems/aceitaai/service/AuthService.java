@@ -45,7 +45,7 @@ public class AuthService {
 
         autonomo = autonomoRepository.save(autonomo);
 
-        String token = jwtService.gerarToken(autonomo.getId(), autonomo.getEmail());
+        String token = jwtService.gerarToken(autonomo.getId(), autonomo.getEmail(), autonomo.getNomeNegocio());
         return new AuthResponse(token, autonomo.getId(), autonomo.getNomeNegocio());
     }
 
@@ -57,7 +57,7 @@ public class AuthService {
             throw new IllegalArgumentException("E-mail ou senha invalidos");
         }
 
-        String token = jwtService.gerarToken(autonomo.getId(), autonomo.getEmail());
+        String token = jwtService.gerarToken(autonomo.getId(), autonomo.getEmail(), autonomo.getNomeNegocio());
         return new AuthResponse(token, autonomo.getId(), autonomo.getNomeNegocio());
     }
 }

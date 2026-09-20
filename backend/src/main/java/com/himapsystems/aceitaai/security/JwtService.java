@@ -25,11 +25,12 @@ public class JwtService {
         this.expiracaoMs = expiracaoMs;
     }
 
-    public String gerarToken(Long autonomoId, String email) {
+    public String gerarToken(Long autonomoId, String email, String nomeNegocio) {
         Instant agora = Instant.now();
         return Jwts.builder()
                 .subject(email)
                 .claim("autonomoId", autonomoId)
+                .claim("nomeNegocio", nomeNegocio)
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plusMillis(expiracaoMs)))
                 .signWith(chaveSecreta)
