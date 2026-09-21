@@ -1,5 +1,7 @@
 package com.himapsystems.aceitaai.controller;
 
+import com.himapsystems.aceitaai.exception.AcessoNegadoException;
+import com.himapsystems.aceitaai.exception.ConflitoException;
 import com.himapsystems.aceitaai.exception.RecursoNaoEncontradoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     public ResponseEntity<Map<String, String>> handleNaoEncontrado(RecursoNaoEncontradoException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("erro", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AcessoNegadoException.class)
+    public ResponseEntity<Map<String, String>> handleAcessoNegado(AcessoNegadoException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("erro", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConflitoException.class)
+    public ResponseEntity<Map<String, String>> handleConflito(ConflitoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("erro", ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
