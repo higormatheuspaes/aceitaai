@@ -28,6 +28,50 @@ export type ItemOrcamento = {
   total: number;
 };
 
+export type TipoDecisao = "ACEITO" | "RECUSADO" | "AJUSTE";
+
+export type DecisaoAutonomo = {
+  tipo: TipoDecisao;
+  codigo: string;
+  nome: string;
+  cpfMascarado: string;
+  ip: string;
+  timestamp: string;
+  comentario: string | null;
+  hashDocumento: string;
+};
+
+export type DecisaoPublica = {
+  tipo: TipoDecisao;
+  codigo: string;
+  nome: string;
+  cpfMascarado: string;
+  timestamp: string;
+  comentario: string | null;
+};
+
+export type OrcamentoPublico = {
+  nomeNegocio: string;
+  localNegocio: string | null;
+  clienteNome: string;
+  itens: {
+    descricao: string;
+    quantidade: number;
+    valorUnitario: number;
+    desconto: number;
+    total: number;
+  }[];
+  total: number;
+  validadeDias: number | null;
+  validaAte: string | null;
+  formaPagamento: string | null;
+  observacoes: string | null;
+  criadoEm: string;
+  status: StatusOrcamento;
+  decisao: DecisaoPublica | null;
+  visualizacaoDoDono: boolean;
+};
+
 export type Orcamento = {
   id: number;
   clienteId: number;
@@ -43,6 +87,7 @@ export type Orcamento = {
   criadoEm: string;
   itens: ItemOrcamento[];
   total: number;
+  decisao: DecisaoAutonomo | null;
 };
 
 export type DashboardResumo = {
