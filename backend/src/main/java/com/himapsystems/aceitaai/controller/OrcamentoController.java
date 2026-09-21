@@ -4,6 +4,7 @@ import com.himapsystems.aceitaai.dto.DashboardResumoResponse;
 import com.himapsystems.aceitaai.dto.OrcamentoRequest;
 import com.himapsystems.aceitaai.dto.OrcamentoResponse;
 import com.himapsystems.aceitaai.dto.OrcamentoResumoResponse;
+import com.himapsystems.aceitaai.dto.OrcamentoRevisaoRequest;
 import com.himapsystems.aceitaai.dto.PageResponse;
 import com.himapsystems.aceitaai.service.ComprovanteService;
 import com.himapsystems.aceitaai.service.OrcamentoService;
@@ -55,6 +56,15 @@ public class OrcamentoController {
     @GetMapping("/{id}")
     public OrcamentoResponse buscar(@AuthenticationPrincipal Long autonomoId, @PathVariable Long id) {
         return orcamentoService.buscar(autonomoId, id);
+    }
+
+    @PostMapping("/{id}/versoes")
+    public OrcamentoResponse revisar(
+            @AuthenticationPrincipal Long autonomoId,
+            @PathVariable Long id,
+            @Valid @RequestBody OrcamentoRevisaoRequest request
+    ) {
+        return orcamentoService.revisar(autonomoId, id, request);
     }
 
     @GetMapping("/{id}/comprovante")
