@@ -5,8 +5,10 @@ import com.himapsystems.aceitaai.dto.OrcamentoRequest;
 import com.himapsystems.aceitaai.dto.OrcamentoResponse;
 import com.himapsystems.aceitaai.dto.OrcamentoResumoResponse;
 import com.himapsystems.aceitaai.dto.PageResponse;
+import com.himapsystems.aceitaai.service.ComprovanteService;
 import com.himapsystems.aceitaai.service.OrcamentoService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrcamentoController {
 
     private final OrcamentoService orcamentoService;
+    private final ComprovanteService comprovanteService;
 
-    public OrcamentoController(OrcamentoService orcamentoService) {
+    public OrcamentoController(OrcamentoService orcamentoService, ComprovanteService comprovanteService) {
         this.orcamentoService = orcamentoService;
+        this.comprovanteService = comprovanteService;
     }
 
     @PostMapping
@@ -51,5 +55,10 @@ public class OrcamentoController {
     @GetMapping("/{id}")
     public OrcamentoResponse buscar(@AuthenticationPrincipal Long autonomoId, @PathVariable Long id) {
         return orcamentoService.buscar(autonomoId, id);
+    }
+
+    @GetMapping("/{id}/comprovante")
+    public ResponseEntity<byte[]> comprovante(@AuthenticationPrincipal Long autonomoId, @PathVariable Long id) {
+        return RespostaPdf.comoDownload(comprovanteService.doDono(autonomoId, id));
     }
 }
