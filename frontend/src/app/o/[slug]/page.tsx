@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function Resultado({ decisao, nomeNegocio }: { decisao: DecisaoPublica; nomeNegocio: string }) {
+function Resultado({ decisao, nomeNegocio, slug }: { decisao: DecisaoPublica; nomeNegocio: string; slug: string }) {
   const quando = formatarDataHora(decisao.timestamp);
 
   const conteudo = {
@@ -60,8 +60,14 @@ function Resultado({ decisao, nomeNegocio }: { decisao: DecisaoPublica; nomeNego
         </div>
       </div>
 
+      {decisao.tipo === "ACEITO" && (
+        <a className="btn btn-primary btn-block" href={`/o/${encodeURIComponent(slug)}/comprovante`}>
+          Baixar comprovante em PDF
+        </a>
+      )}
+
       {decisao.comentario && (
-        <p className="texto-apoio" style={{ marginBottom: 0 }}>
+        <p className="texto-apoio" style={{ margin: "14px 0 0" }}>
           <strong>Sua mensagem:</strong> {decisao.comentario}
         </p>
       )}
@@ -153,7 +159,7 @@ export default async function PaginaPublicaOrcamento({ params }: { params: Promi
         </div>
 
         {decisao ? (
-          <Resultado decisao={decisao} nomeNegocio={orcamento.nomeNegocio} />
+          <Resultado decisao={decisao} nomeNegocio={orcamento.nomeNegocio} slug={slug} />
         ) : expirado ? (
           <div className="accept-panel">
             <h3>Este orçamento expirou</h3>

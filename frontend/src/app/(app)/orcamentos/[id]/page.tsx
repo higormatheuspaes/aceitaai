@@ -75,6 +75,15 @@ export default async function OrcamentoPage({ params }: { params: Promise<{ id: 
                     </>
                   )}
                 </dl>
+                {orcamento.decisao.tipo === "ACEITO" && (
+                  <a
+                    className="btn btn-primary"
+                    style={{ marginTop: 14 }}
+                    href={`/orcamentos/${orcamento.id}/comprovante`}
+                  >
+                    Baixar comprovante em PDF
+                  </a>
+                )}
               </div>
             )}
 
