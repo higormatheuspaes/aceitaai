@@ -51,6 +51,25 @@ async function request<T>(path: string, options: RequestInit = {}, autenticado =
   return data as T;
 }
 
+/** Busca um arquivo (ex: PDF) sem interpretar o corpo como JSON; erros da API viram ApiError. */
+export async function apiBaixar(path: string, autenticado = false): Promise<Response> {
+  const headers: Record<string, string> = {};
+
+  if (autenticado) {
+    const token = await obterToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  const response = await fetch(`${API_URL}${path}`, { headers, cache: "no-store" });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new ApiError(montarMensagem(data), response.status);
+  }
+  return response;
+}
+
 export function apiPost<T>(path: string, body: unknown, headers?: Record<string, string>): Promise<T> {
   return request<T>(path, { method: "POST", body: JSON.stringify(body), headers });
 }
