@@ -7,6 +7,12 @@ import type { Orcamento } from "@/lib/types";
 import { CopiarLink } from "@/components/copiar-link";
 import { StatusPill } from "@/components/status-pill";
 
+const ROTULO_DECISAO = {
+  ACEITO: "Aceitou o orçamento",
+  RECUSADO: "Recusou o orçamento",
+  AJUSTE: "Pediu ajuste",
+} as const;
+
 function linkWhatsapp(whatsapp: string, mensagem: string) {
   const digitos = whatsapp.replace(/\D/g, "");
   const numero = digitos.length <= 11 ? `55${digitos}` : digitos;
@@ -44,6 +50,34 @@ export default async function OrcamentoPage({ params }: { params: Promise<{ id: 
       <div className="content">
         <div className="builder-grid">
           <div className="builder-main">
+            {orcamento.decisao && (
+              <div className="card">
+                <h3>Resposta do cliente</h3>
+                <dl className="detail-list">
+                  <dt>Resposta</dt>
+                  <dd>{ROTULO_DECISAO[orcamento.decisao.tipo]}</dd>
+                  <dt>Nome informado</dt>
+                  <dd>{orcamento.decisao.nome}</dd>
+                  <dt>CPF</dt>
+                  <dd>{orcamento.decisao.cpfMascarado}</dd>
+                  <dt>Data e hora</dt>
+                  <dd>{formatarDataHora(orcamento.decisao.timestamp)}</dd>
+                  <dt>IP</dt>
+                  <dd>{orcamento.decisao.ip}</dd>
+                  <dt>Comprovante</dt>
+                  <dd>{orcamento.decisao.codigo}</dd>
+                  <dt>Hash SHA-256</dt>
+                  <dd className="hash">{orcamento.decisao.hashDocumento}</dd>
+                  {orcamento.decisao.comentario && (
+                    <>
+                      <dt>Mensagem</dt>
+                      <dd>{orcamento.decisao.comentario}</dd>
+                    </>
+                  )}
+                </dl>
+              </div>
+            )}
+
             <div className="card">
               <h3>Resumo</h3>
               <dl className="detail-list">
