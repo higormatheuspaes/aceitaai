@@ -1,10 +1,12 @@
 package com.himapsystems.aceitaai.service;
 
+import com.himapsystems.aceitaai.domain.Aceite;
 import com.himapsystems.aceitaai.domain.Cliente;
 import com.himapsystems.aceitaai.domain.ItemOrcamento;
 import com.himapsystems.aceitaai.domain.Orcamento;
 import com.himapsystems.aceitaai.domain.StatusOrcamento;
 import com.himapsystems.aceitaai.dto.DashboardResumoResponse;
+import com.himapsystems.aceitaai.dto.DecisaoAutonomoResponse;
 import com.himapsystems.aceitaai.dto.ItemOrcamentoRequest;
 import com.himapsystems.aceitaai.dto.ItemOrcamentoResponse;
 import com.himapsystems.aceitaai.dto.OrcamentoRequest;
@@ -12,9 +14,11 @@ import com.himapsystems.aceitaai.dto.OrcamentoResponse;
 import com.himapsystems.aceitaai.dto.OrcamentoResumoResponse;
 import com.himapsystems.aceitaai.dto.PageResponse;
 import com.himapsystems.aceitaai.exception.RecursoNaoEncontradoException;
+import com.himapsystems.aceitaai.repository.AceiteRepository;
 import com.himapsystems.aceitaai.repository.AutonomoRepository;
 import com.himapsystems.aceitaai.repository.ClienteRepository;
 import com.himapsystems.aceitaai.repository.OrcamentoRepository;
+import com.himapsystems.aceitaai.util.Cpf;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -33,15 +36,18 @@ public class OrcamentoService {
     private final OrcamentoRepository orcamentoRepository;
     private final ClienteRepository clienteRepository;
     private final AutonomoRepository autonomoRepository;
+    private final AceiteRepository aceiteRepository;
 
     public OrcamentoService(
             OrcamentoRepository orcamentoRepository,
             ClienteRepository clienteRepository,
-            AutonomoRepository autonomoRepository
+            AutonomoRepository autonomoRepository,
+            AceiteRepository aceiteRepository
     ) {
         this.orcamentoRepository = orcamentoRepository;
         this.clienteRepository = clienteRepository;
         this.autonomoRepository = autonomoRepository;
+        this.aceiteRepository = aceiteRepository;
     }
 
     @Transactional
@@ -59,7 +65,7 @@ public class OrcamentoService {
 
         for (ItemOrcamentoRequest item : request.itens()) {
             BigDecimal desconto = item.desconto() != null ? item.desconto() : BigDecimal.ZERO;
-            if (desconto.compareTo(subtotalBruto(item.quantidade(), item.valorUnitario())) > 0) {
+            if (desconto.compareTo(OrcamentoCalculos.subtotalBruto(item.quantidade(), item.valorUnitario())) > 0) {
                 throw new IllegalArgumentException(
                         "O desconto do item \"" + item.descricao().trim() + "\" nao pode ser maior que o valor do item");
             }
@@ -72,7 +78,7 @@ public class OrcamentoService {
                     .build());
         }
 
-        return toResponse(orcamentoRepository.save(orcamento));
+        return toResponse(orcamentoRepository.save(orcamento), null);
     }
 
     @Transactional(readOnly = true)
@@ -95,7 +101,8 @@ public class OrcamentoService {
     public OrcamentoResponse buscar(Long autonomoId, Long id) {
         Orcamento orcamento = orcamentoRepository.findByIdAndAutonomoId(id, autonomoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Orcamento nao encontrado"));
-        return toResponse(orcamento);
+        Aceite decisao = aceiteRepository.findFirstByOrcamentoIdOrderByTimestampDescIdDesc(orcamento.getId()).orElse(null);
+        return toResponse(orcamento, decisao);
     }
 
     @Transactional(readOnly = true)
@@ -110,11 +117,8 @@ public class OrcamentoService {
         return new DashboardResumoResponse(enviados, aceitos, taxa);
     }
 
-    private OrcamentoResponse toResponse(Orcamento orcamento) {
+    private OrcamentoResponse toResponse(Orcamento orcamento, Aceite decisao) {
         var itens = orcamento.getItens().stream().map(this::toItemResponse).toList();
-        LocalDateTime validaAte = orcamento.getValidadeDias() == null
-                ? null
-                : orcamento.getCriadoEm().plusDays(orcamento.getValidadeDias());
 
         return new OrcamentoResponse(
                 orcamento.getId(),
@@ -122,15 +126,16 @@ public class OrcamentoService {
                 orcamento.getCliente().getNome(),
                 orcamento.getCliente().getWhatsapp(),
                 orcamento.getVersao(),
-                statusEfetivo(orcamento),
+                OrcamentoCalculos.statusEfetivo(orcamento),
                 orcamento.getValidadeDias(),
-                validaAte,
+                OrcamentoCalculos.validaAte(orcamento),
                 orcamento.getFormaPagamento(),
                 orcamento.getObservacoes(),
                 orcamento.getLinkSlug(),
                 orcamento.getCriadoEm(),
                 itens,
-                totalDoOrcamento(orcamento)
+                OrcamentoCalculos.totalDoOrcamento(orcamento),
+                decisao == null ? null : toDecisaoAutonomo(decisao)
         );
     }
 
@@ -140,8 +145,8 @@ public class OrcamentoService {
                 orcamento.getCliente().getId(),
                 orcamento.getCliente().getNome(),
                 descricaoResumida(orcamento),
-                totalDoOrcamento(orcamento),
-                statusEfetivo(orcamento),
+                OrcamentoCalculos.totalDoOrcamento(orcamento),
+                OrcamentoCalculos.statusEfetivo(orcamento),
                 orcamento.getCriadoEm(),
                 orcamento.getLinkSlug()
         );
@@ -154,7 +159,20 @@ public class OrcamentoService {
                 item.getQuantidade(),
                 item.getValorUnitario(),
                 item.getDesconto(),
-                totalDoItem(item)
+                OrcamentoCalculos.totalDoItem(item)
+        );
+    }
+
+    private DecisaoAutonomoResponse toDecisaoAutonomo(Aceite aceite) {
+        return new DecisaoAutonomoResponse(
+                aceite.getTipoDecisao(),
+                HashDocumento.codigoDoComprovante(aceite.getHashDocumentoSha256()),
+                aceite.getNomeClienteInformado(),
+                Cpf.mascarar(aceite.getCpfClienteInformado()),
+                aceite.getIp(),
+                aceite.getTimestamp(),
+                aceite.getComentario(),
+                aceite.getHashDocumentoSha256()
         );
     }
 
@@ -165,30 +183,6 @@ public class OrcamentoService {
         }
         String primeiro = itens.get(0).getDescricao();
         return itens.size() == 1 ? primeiro : primeiro + " +" + (itens.size() - 1);
-    }
-
-    private StatusOrcamento statusEfetivo(Orcamento orcamento) {
-        boolean venceu = orcamento.getStatus() == StatusOrcamento.PENDENTE
-                && orcamento.getValidadeDias() != null
-                && LocalDateTime.now().isAfter(orcamento.getCriadoEm().plusDays(orcamento.getValidadeDias()));
-        return venceu ? StatusOrcamento.EXPIRADO : orcamento.getStatus();
-    }
-
-    private BigDecimal totalDoOrcamento(Orcamento orcamento) {
-        return orcamento.getItens().stream()
-                .map(this::totalDoItem)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal totalDoItem(ItemOrcamento item) {
-        return subtotalBruto(item.getQuantidade(), item.getValorUnitario())
-                .subtract(item.getDesconto())
-                .setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal subtotalBruto(int quantidade, BigDecimal valorUnitario) {
-        return valorUnitario.multiply(BigDecimal.valueOf(quantidade));
     }
 
     private String vazioParaNulo(String texto) {
