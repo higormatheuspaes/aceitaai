@@ -67,6 +67,7 @@ export type OrcamentoPublico = {
   formaPagamento: string | null;
   observacoes: string | null;
   criadoEm: string;
+  versao: number;
   status: StatusOrcamento;
   decisao: DecisaoPublica | null;
   visualizacaoDoDono: boolean;
@@ -88,6 +89,7 @@ export type Orcamento = {
   itens: ItemOrcamento[];
   total: number;
   decisao: DecisaoAutonomo | null;
+  versaoAtualId: number;
 };
 
 export type DashboardResumo = {
@@ -114,3 +116,5 @@ export type NovoOrcamentoPayload = {
     desconto: number;
   }[];
 };
+
+export type RevisaoOrcamentoPayload = Omit<NovoOrcamentoPayload, "clienteId">;
