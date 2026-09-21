@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { criarOrcamento } from "@/app/actions/orcamentos";
+import { criarOrcamento, revisarOrcamento } from "@/app/actions/orcamentos";
 import { formatarMoeda, iniciais, paraNumero } from "@/lib/formato";
-import type { ClienteOpcao, NovoOrcamentoPayload } from "@/lib/types";
+import type { ClienteOpcao, RevisaoOrcamentoPayload } from "@/lib/types";
 import { SeletorCliente } from "@/components/seletor-cliente";
 
 type ItemForm = {
@@ -60,13 +60,40 @@ function calcular(item: ItemForm, posicao: number): ItemCalculado {
   return { ...base, total: bruto - desconto, erro: null };
 }
 
-export function FormularioOrcamento({ nomeNegocio }: { nomeNegocio: string }) {
-  const [cliente, setCliente] = useState<ClienteOpcao | null>(null);
-  const [itens, setItens] = useState<ItemForm[]>([novoItem(1)]);
-  const [proximaChave, setProximaChave] = useState(2);
-  const [validade, setValidade] = useState("7");
-  const [formaPagamento, setFormaPagamento] = useState("");
-  const [observacoes, setObservacoes] = useState("");
+// Preenchido quando o autonomo edita um orcamento em que o cliente pediu ajuste (gera uma nova versao).
+export type DadosRevisao = {
+  orcamentoId: number;
+  cliente: ClienteOpcao;
+  itens: { descricao: string; quantidade: number; valorUnitario: number; desconto: number }[];
+  validadeDias: number | null;
+  formaPagamento: string | null;
+  observacoes: string | null;
+  pedidoDoCliente: string | null;
+};
+
+const VALIDADES_PADRAO = ["7", "15", "30"];
+
+const emTexto = (valor: number) => (valor === 0 ? "" : String(valor).replace(".", ","));
+
+export function FormularioOrcamento({ nomeNegocio, revisao }: { nomeNegocio: string; revisao?: DadosRevisao }) {
+  const [cliente, setCliente] = useState<ClienteOpcao | null>(revisao?.cliente ?? null);
+  const [itens, setItens] = useState<ItemForm[]>(
+    revisao
+      ? revisao.itens.map((item, indice) => ({
+          chave: indice + 1,
+          descricao: item.descricao,
+          quantidade: String(item.quantidade),
+          valor: emTexto(item.valorUnitario),
+          desconto: emTexto(item.desconto),
+        }))
+      : [novoItem(1)]
+  );
+  const [proximaChave, setProximaChave] = useState(revisao ? revisao.itens.length + 1 : 2);
+  const [validade, setValidade] = useState(
+    revisao ? (revisao.validadeDias === null ? "sem" : String(revisao.validadeDias)) : "7"
+  );
+  const [formaPagamento, setFormaPagamento] = useState(revisao?.formaPagamento ?? "");
+  const [observacoes, setObservacoes] = useState(revisao?.observacoes ?? "");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, iniciarEnvio] = useTransition();
 
@@ -100,8 +127,7 @@ export function FormularioOrcamento({ nomeNegocio }: { nomeNegocio: string }) {
       return;
     }
 
-    const payload: NovoOrcamentoPayload = {
-      clienteId: cliente.id,
+    const conteudo: RevisaoOrcamentoPayload = {
       validadeDias: validade === "sem" ? null : Number(validade),
       formaPagamento: formaPagamento.trim(),
       observacoes: observacoes.trim(),
@@ -114,7 +140,9 @@ export function FormularioOrcamento({ nomeNegocio }: { nomeNegocio: string }) {
     };
 
     iniciarEnvio(async () => {
-      const resultado = await criarOrcamento(payload);
+      const resultado = revisao
+        ? await revisarOrcamento(revisao.orcamentoId, conteudo)
+        : await criarOrcamento({ clienteId: cliente.id, ...conteudo });
       if (resultado?.erro) setErro(resultado.erro);
     });
   }
@@ -124,13 +152,19 @@ export function FormularioOrcamento({ nomeNegocio }: { nomeNegocio: string }) {
   return (
     <form onSubmit={enviar} noValidate>
       <div className="topbar">
-        <h1>Novo orçamento</h1>
+        <h1>{revisao ? `Editar orçamento #${revisao.orcamentoId}` : "Novo orçamento"}</h1>
         <div style={{ display: "flex", gap: 10 }}>
-          <Link href="/dashboard" className="btn btn-outline">
+          <Link href={revisao ? `/orcamentos/${revisao.orcamentoId}` : "/dashboard"} className="btn btn-outline">
             Cancelar
           </Link>
           <button className="btn btn-primary" type="submit" disabled={enviando}>
-            {enviando ? "Gerando..." : "Gerar link"}
+            {revisao
+              ? enviando
+                ? "Enviando..."
+                : "Enviar nova versão"
+              : enviando
+                ? "Gerando..."
+                : "Gerar link"}
           </button>
         </div>
       </div>
@@ -140,12 +174,31 @@ export function FormularioOrcamento({ nomeNegocio }: { nomeNegocio: string }) {
 
         <div className="builder-grid">
           <div className="builder-main">
+            {revisao && (
+              <div className="card">
+                <h3>Pedido do cliente</h3>
+                <p className="texto-apoio" style={{ marginBottom: 0 }}>
+                  {revisao.pedidoDoCliente ?? "O cliente pediu ajuste, mas não deixou uma mensagem."}
+                </p>
+                <p className="texto-apoio" style={{ margin: "10px 0 0" }}>
+                  Ao enviar, o mesmo link passa a mostrar a nova versão e o cliente pode responder de novo. A versão
+                  atual fica guardada como histórico.
+                </p>
+              </div>
+            )}
+
             <div className="card">
               <h3>Cliente</h3>
-              <SeletorCliente selecionado={cliente} onSelecionar={setCliente} />
-              <div className="hint-linha">
-                Não achou? <Link href="/clientes/novo">Cadastrar novo cliente</Link>
-              </div>
+              {revisao ? (
+                <div className="cliente-fixo">{revisao.cliente.nome}</div>
+              ) : (
+                <>
+                  <SeletorCliente selecionado={cliente} onSelecionar={setCliente} />
+                  <div className="hint-linha">
+                    Não achou? <Link href="/clientes/novo">Cadastrar novo cliente</Link>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="card">
@@ -229,6 +282,9 @@ export function FormularioOrcamento({ nomeNegocio }: { nomeNegocio: string }) {
                     <option value="7">7 dias (padrão)</option>
                     <option value="15">15 dias</option>
                     <option value="30">30 dias</option>
+                    {validade !== "sem" && !VALIDADES_PADRAO.includes(validade) && (
+                      <option value={validade}>{validade} dias</option>
+                    )}
                     <option value="sem">Sem validade definida</option>
                   </select>
                 </div>
