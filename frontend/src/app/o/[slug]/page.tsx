@@ -105,6 +105,7 @@ export default async function PaginaPublicaOrcamento({ params }: { params: Promi
           <h1>Orçamento de serviço</h1>
           <div className="to-line">
             Preparado para <strong>{orcamento.clienteNome}</strong> · enviado em {formatarData(orcamento.criadoEm)}
+            {orcamento.versao > 1 ? ` · versão ${orcamento.versao} (atualizada após pedido de ajuste)` : ""}
           </div>
 
           <table className="public-table">
