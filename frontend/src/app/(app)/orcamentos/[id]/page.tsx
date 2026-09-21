@@ -30,6 +30,9 @@ export default async function OrcamentoPage({ params }: { params: Promise<{ id: 
     throw error;
   }
 
+  const versaoAnterior = orcamento.versaoAtualId !== orcamento.id;
+  const podeRevisar = !versaoAnterior && orcamento.status === "AJUSTE";
+
   const sessao = await obterSessao();
   const baseUrl = process.env.APP_URL ?? "http://localhost:3000";
   const link = `${baseUrl}/o/${orcamento.linkSlug}`;
@@ -38,7 +41,10 @@ export default async function OrcamentoPage({ params }: { params: Promise<{ id: 
   return (
     <>
       <div className="topbar">
-        <h1>Orçamento #{orcamento.id}</h1>
+        <h1>
+          Orçamento #{orcamento.id}
+          {orcamento.versao > 1 ? ` · versão ${orcamento.versao}` : ""}
+        </h1>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <StatusPill status={orcamento.status} />
           <Link href="/dashboard" className="btn btn-outline">
@@ -50,6 +56,19 @@ export default async function OrcamentoPage({ params }: { params: Promise<{ id: 
       <div className="content">
         <div className="builder-grid">
           <div className="builder-main">
+            {versaoAnterior && (
+              <div className="card">
+                <h3>Versão anterior</h3>
+                <p className="texto-apoio">
+                  Este orçamento foi substituído por uma versão mais nova. Esta fica guardada como histórico, com a
+                  resposta que o cliente deu na época.
+                </p>
+                <Link href={`/orcamentos/${orcamento.versaoAtualId}`} className="btn btn-outline">
+                  Ver versão atual
+                </Link>
+              </div>
+            )}
+
             {orcamento.decisao && (
               <div className="card">
                 <h3>Resposta do cliente</h3>
@@ -75,6 +94,15 @@ export default async function OrcamentoPage({ params }: { params: Promise<{ id: 
                     </>
                   )}
                 </dl>
+                {podeRevisar && (
+                  <Link
+                    className="btn btn-primary"
+                    style={{ marginTop: 14 }}
+                    href={`/orcamentos/${orcamento.id}/editar`}
+                  >
+                    Editar e enviar nova versão
+                  </Link>
+                )}
                 {orcamento.decisao.tipo === "ACEITO" && (
                   <a
                     className="btn btn-primary"
