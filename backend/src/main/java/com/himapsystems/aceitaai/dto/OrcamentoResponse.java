@@ -22,5 +22,6 @@ public record OrcamentoResponse(
         LocalDateTime criadoEm,
         List<ItemOrcamentoResponse> itens,
         BigDecimal total,
-        DecisaoAutonomoResponse decisao
+        DecisaoAutonomoResponse decisao,
+        Long versaoAtualId
 ) {}

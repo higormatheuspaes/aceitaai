@@ -17,6 +17,7 @@ public record OrcamentoPublicoResponse(
         String formaPagamento,
         String observacoes,
         LocalDateTime criadoEm,
+        Integer versao,
         StatusOrcamento status,
         DecisaoPublicaResponse decisao,
         boolean visualizacaoDoDono

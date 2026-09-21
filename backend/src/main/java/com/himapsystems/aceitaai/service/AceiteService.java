@@ -62,6 +62,7 @@ public class AceiteService {
                 orcamento.getFormaPagamento(),
                 orcamento.getObservacoes(),
                 orcamento.getCriadoEm(),
+                orcamento.getVersao(),
                 OrcamentoCalculos.statusEfetivo(orcamento),
                 decisao == null ? null : toPublica(decisao),
                 ehODono(orcamento, visitanteId)
